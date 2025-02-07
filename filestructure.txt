@@ -1,0 +1,47 @@
+transcontinental/
+├── .env.local             # Environment variables (local development)
+├── .eslintrc.json        # ESLint configuration
+├── .prettierrc.json      # Prettier configuration
+├── next.config.js        # Next.js configuration
+├── package.json           # Project dependencies
+├── postcss.config.js      # PostCSS configuration (Tailwind if used)
+├── prisma/
+│   ├── migrations/       # Database migrations
+│   └── schema.prisma      # Prisma schema
+├── public/                # Static assets (images, fonts, etc.)
+│   ├── favicon.ico
+│   └── ...
+├── src/
+│   ├── components/       # Reusable UI components
+│   │   ├── LoginForm.tsx
+│   │   ├── SignupForm.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── ShipmentCard.tsx
+│   │   └── Navbar.tsx
+│   ├── contexts/          # State management (React Context)
+│   │   └── AuthContext.tsx
+│   ├── hooks/             # Custom React hooks
+│   │   └── useAuth.tsx
+│   ├── lib/               # Utility and helper functions
+│   │   ├── api.ts         # API client
+│   │   └── prisma.ts      # Prisma client initialization
+│   ├── models/            # TypeScript interfaces/types
+│   │   ├── Shipment.ts    # Shipment type definition
+│   │   └── User.ts        # User type definition
+│   ├── pages/             # Next.js pages (routing)
+│   │   ├── _app.tsx        # Custom App component
+│   │   ├── _document.tsx   # Custom Document component
+│   │   ├── api/           # API routes (serverless functions)
+│   │   │   ├── auth/
+│   │   │   │   ├── signup.ts
+│   │   │   │   └── login.ts
+│   │   │   └── shipments/
+│   │   │       ├── add.ts
+│   │   │       └── [trackingNumber].ts
+│   │   ├── index.tsx       # Home page
+│   │   ├── login.tsx       # Login page
+│   │   └── signup.tsx      # Signup page
+│   ├── styles/            # Global styles (Material UI + Tailwind)
+│   │   ├── globals.css    # Global CSS (if needed)
+│   │   └── theme.ts       # Material UI theme
+└── tsconfig.json          # TypeScript configuration
