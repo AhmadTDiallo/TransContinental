@@ -205,12 +205,12 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Our History Section */}
+      {/* Modern Our History Section */}
       <Box 
         id="our-history"
         sx={{ 
           py: { xs: 8, md: 12 },
-          backgroundColor: 'background.paper',
+          backgroundColor: 'background.default',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -220,151 +220,146 @@ const Home = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: `
-              linear-gradient(45deg, rgba(10, 25, 41, 0.95) 0%, rgba(15, 40, 70, 0.9) 100%),
-              url(/luandanight.jpg)
-            `,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'grayscale(30%)',
-            zIndex: -1,
+            background: `linear-gradient(45deg, 
+              rgba(10, 25, 41, 0.98) 0%, 
+              rgba(15, 40, 70, 0.95) 100%)`,
+            zIndex: 0,
           },
         }}
       >
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={6} alignItems="center">
-            {/* Left Column – Image */}
+          <Grid container spacing={6} alignItems="center" sx={{ position: 'relative' }}>
+            {/* Floating Image Container */}
             <Grid item xs={12} md={6}>
               <Box sx={{
+                position: 'relative',
                 borderRadius: 4,
                 overflow: 'hidden',
-                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-                transition: 'transform 0.4s ease-out, box-shadow 0.4s ease-out',
+                transform: 'translateY(0)',
+                transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  transform: 'scale(1.03)',
-                  boxShadow: '0 32px 64px rgba(0, 0, 0, 0.5)',
+                  transform: 'translateY(-10px)',
                 },
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 16,
+                  left: 16,
+                  right: -16,
+                  bottom: -16,
+                  background: 'linear-gradient(45deg, #4dd0e155, #26c6da33)',
+                  borderRadius: 4,
+                  zIndex: -1,
+                }
               }}>
                 <Image
                   src="/TranscontinentalLOGO.png"
-                  alt="Trans-Continental Office"
+                  alt="Company History"
                   width={600}
                   height={400}
-                  priority
                   style={{
                     width: '100%',
                     height: 'auto',
-                    display: 'block',
                     objectFit: 'cover',
-                    transition: 'transform 0.4s ease-out',
+                    borderRadius: 8,
+                    border: '1px solid rgba(77, 208, 225, 0.15)'
                   }}
                 />
               </Box>
             </Grid>
-            
-            {/* Right Column – Text & Stats */}
+
+            {/* Modern Content Card */}
             <Grid item xs={12} md={6}>
-              <Typography 
-                variant="h2" 
-                gutterBottom 
-                sx={{ 
-                  mb: 3,
-                  fontWeight: 800,
-                  background: 'linear-gradient(45deg, #4dd0e1 30%, #26c6da 90%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  lineHeight: 1.1,
-                  letterSpacing: '-0.03em',
-                }}
-              >
-                <Public sx={{ 
-                  fontSize: 48, 
-                  verticalAlign: 'middle', 
-                  mr: 2,
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
-                }} />
-                25+ Years Shaping Global Logistics
-              </Typography>
-              
-              <Box sx={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 2,
+              <Box sx={{
                 p: 4,
-                mb: 4,
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                backdropFilter: 'blur(16px)',
+                borderRadius: 4,
                 border: '1px solid rgba(77, 208, 225, 0.2)',
+                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+                transform: 'translateY(0)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 32px 64px rgba(0, 0, 0, 0.5)'
+                }
               }}>
-                <Grid container spacing={3}>
-                  <Grid item xs={6}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h3" sx={{ color: '#4dd0e1', fontWeight: 700, mb: 1 }}>
-                        99.7%
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        On-Time Delivery
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h3" sx={{ color: '#4dd0e1', fontWeight: 700, mb: 1 }}>
-                        70+
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        Countries Served
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
+                <Typography 
+                  variant="h2" 
+                  component="div" 
+                  sx={{ 
+                    mb: 3,
+                    fontWeight: 800,
+                    background: 'linear-gradient(45deg, #4dd0e1, #26c6da)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: '2.5rem',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  <Public sx={{ 
+                    fontSize: 40, 
+                    mr: 2,
+                    filter: 'drop-shadow(0 2px 4px rgba(77,208,225,0.3))' 
+                  }} />
+                  Our Evolution
+                </Typography>
+
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    color: 'text.primary',
+                    mb: 3,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                    fontSize: '1.5rem',
+                    background: 'linear-gradient(45deg, #e3f2fd, #90caf9)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Trans-Continental Transitário Importação e Exportação Limitada
+                </Typography>
+
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: 'text.secondary',
+                    mb: 4,
+                    fontSize: '1rem',
+                    lineHeight: 1.7,
+                    fontWeight: 300,
+                  }}
+                >
+                  Founded in 1995, Trans-Continental LDA has established itself as Angola&apos;s premier logistics solutions provider. With nearly three decades of excellence, we deliver seamless logistics, customs clearance, and freight forwarding services across Angola and beyond.
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  endIcon={<ArrowForward />}
+                  component={Link}
+                  href="/about"
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 2,
+                    background: 'linear-gradient(45deg, #4dd0e1 30%, #26c6da 90%)',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 8px 24px rgba(77, 208, 225, 0.4)',
+                    }
+                  }}
+                >
+                  Discover More
+                </Button>
               </Box>
-              
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  color: 'text.primary',
-                  mb: 3,
-                  fontWeight: 500,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Trans-Continental Transitário Importação e Exportação Limitada
-              </Typography>
-              
-              <Typography 
-                variant="body1" 
-                paragraph 
-                sx={{ 
-                  fontSize: '1.1rem',
-                  lineHeight: 1.8,
-                  color: 'text.secondary',
-                  mb: 4,
-                  fontWeight: 300,
-                }}
-              >
-                Founded in 1995, Trans-Continental LDA has established itself as Angola&apos;s premier logistics solutions provider. With nearly three decades of excellence, we deliver seamless logistics, customs clearance, and freight forwarding services across Angola and beyond.
-              </Typography>
-              
-              <Button
-                variant="contained"
-                size="large"
-                endIcon={<ArrowForward sx={{ ml: 1 }} />}
-                component={Link}
-                href="/about"
-                sx={{
-                  px: 5,
-                  py: 2,
-                  borderRadius: 3,
-                  background: 'linear-gradient(45deg, #4dd0e1 30%, #26c6da 90%)',
-                  fontWeight: 600,
-                  transition: 'all 0.3s ease-out',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 16px rgba(77, 208, 225, 0.3)',
-                  },
-                }}
-              >
-                Explore Our Story
-              </Button>
             </Grid>
           </Grid>
         </Container>

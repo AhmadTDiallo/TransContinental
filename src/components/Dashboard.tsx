@@ -145,14 +145,14 @@ const Dashboard = () => {
   return (
     <Box sx={{ backgroundColor: '#f4f4f4', minHeight: '100vh' }}>
       <CssBaseline />
-      <Container maxWidth={false} disableGutters sx={{ mt: 0, mb: 4 }}>
+      <Container maxWidth={false} disableGutters sx={{ height: '100vh' }}>
         <Box
           sx={{
             boxShadow: 3,
             borderRadius: 2,
             overflow: 'hidden',
             background: 'white',
-            minHeight: '80vh',
+            height: '100%',
           }}
         >
           <Box sx={{ display: 'flex', height: '100%' }}>
@@ -191,7 +191,7 @@ const Dashboard = () => {
                   </IconButton>
                 </Box>
                 <Typography variant="h6" noWrap component="div">
-                {session?.user?.name}
+                  {session?.user?.name}
                 </Typography>
               </Box>
 
@@ -324,7 +324,7 @@ const Dashboard = () => {
                               '&:hover': { transform: 'translateY(-3px)' },
                             }}
                           >
-                            Generate Report
+                            Generate Proforma
                           </Button>
                         </Grid>
                       </Grid>
