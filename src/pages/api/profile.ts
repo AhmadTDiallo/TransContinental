@@ -45,6 +45,12 @@ export default async function handler(
   }
 
   if (req.method === 'PUT') {
+    console.log('PUT /api/profile - Session:', session);
+    if (!session || !session.user?.email) {
+      console.error('PUT /api/profile - Unauthorized due to missing session or email');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     try {
       const data = req.body as Partial<ProfileData>;
       const updatedUser = await prisma.user.update({

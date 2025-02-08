@@ -35,7 +35,7 @@ export default function Profile() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('/api/profile.ts');
+        const response = await fetch('/api/profile');
         if (!response.ok) throw new Error('Failed to fetch profile');
         const data = await response.json();
         setProfileData({
@@ -85,7 +85,9 @@ export default function Profile() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        const errorData = await response.json();
+        console.error('Profile update failed on server:', errorData);
+        throw new Error(`Failed to update profile: Server responded with status ${response.status}`);
       }
 
       setMessage('Profile updated successfully!');
