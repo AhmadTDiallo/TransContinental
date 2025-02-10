@@ -1,7 +1,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
-import Dashboard from '../components/Dashboard';
+import Dashboard from '../components/Dashboard_components';
 import { Box, CircularProgress } from '@mui/material';
 
 export default function DashboardPage() {
