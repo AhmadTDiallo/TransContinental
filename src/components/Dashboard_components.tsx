@@ -23,6 +23,9 @@ import {
   Divider,
   FormLabel,
   TextField,
+  ListItemButton,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
   AddBox as NewShipmentIcon,
@@ -87,27 +90,29 @@ const ModalContentBox = styled(Box)(({ theme }) => ({
 
 // Define the type for shipmentData explicitly
 type ShipmentFormData = {
-  billOfLadingCount: number;
-  packingList: boolean;
-  commercialInvoice: boolean;
+  billOfLadingFiles: string[];
+  packingListFile: string | null;
+  commercialInvoiceFile: string | null;
   containers20ft: number;
   containers40ft: number;
 };
 
-// Pending Shipment Item Component
+// Updated Pending Shipment Item Props to include status
 interface PendingShipmentItemProps extends ShipmentFormData {
   id: number;
+  status: string; // e.g., 'Under Review', 'Approved', or 'Disapproved'
   onDelete: () => void;
   onEdit: () => void;
 }
 
 const PendingShipmentItem: React.FC<PendingShipmentItemProps> = ({
   id,
-  billOfLadingCount,
-  packingList,
-  commercialInvoice,
+  billOfLadingFiles,
+  packingListFile,
+  commercialInvoiceFile,
   containers20ft,
   containers40ft,
+  status,
   onDelete,
   onEdit,
 }) => (
@@ -124,22 +129,25 @@ const PendingShipmentItem: React.FC<PendingShipmentItemProps> = ({
     }}
   >
     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#4dd0e1', mb: 1 }}>
-      New Shipment Submission
+      New Shipment Submission #{id}
     </Typography>
     <Typography variant="body2">
-      Bill of Lading/CNCA Files: {billOfLadingCount} file(s)
+      Bill of Lading/CNCA Files: {billOfLadingFiles.length} file(s)
     </Typography>
     <Typography variant="body2">
-      Packing List: {packingList ? 'Uploaded' : 'Not Uploaded'}
+      Packing List: {packingListFile ? 'Uploaded' : 'Not Uploaded'}
     </Typography>
     <Typography variant="body2">
-      Commercial Invoice: {commercialInvoice ? 'Uploaded' : 'Not Uploaded'}
+      Commercial Invoice: {commercialInvoiceFile ? 'Uploaded' : 'Not Uploaded'}
     </Typography>
     <Typography variant="body2">
       20ft Containers: {containers20ft}
     </Typography>
     <Typography variant="body2">
       40ft Containers: {containers40ft}
+    </Typography>
+    <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+      Status: {status || 'Under Review'}
     </Typography>
     <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
       <IconButton aria-label="edit" size="small" sx={{ color: '#4dd0e1' }} onClick={onEdit}>
@@ -171,9 +179,9 @@ const RecentActivitySection: React.FC<{ shipments: PendingShipmentItemProps[] }>
       </Typography>
     </Box>
     {shipments.length > 0 ? (
-      shipments.map((shipment, index) => (
+      shipments.map((shipment) => (
         <Box
-          key={index}
+          key={shipment.id}
           sx={{
             mb: 1.5,
             p: 2,
@@ -198,7 +206,7 @@ const RecentActivitySection: React.FC<{ shipments: PendingShipmentItemProps[] }>
               New Shipment Submission #{shipment.id}
             </Typography>
             <Typography variant="body2" sx={{ color: 'grey' }}>
-              {`Containers: ${shipment.containers20ft}x20ft + ${shipment.containers40ft}x40ft, Documents: BL/CNCA (${shipment.billOfLadingCount}), Packing List (${shipment.packingList ? 'Yes' : 'No'}), Invoice (${shipment.commercialInvoice ? 'Yes' : 'No'})`}
+              {`Containers: ${shipment.containers20ft}x20ft + ${shipment.containers40ft}x40ft, Docs: BL/CNCA (${shipment.billOfLadingFiles.length}), Packing List (${shipment.packingListFile ? 'Yes' : 'No'}), Invoice (${shipment.commercialInvoiceFile ? 'Yes' : 'No'}), Status: ${shipment.status || 'Under Review'}`}
             </Typography>
           </Box>
         </Box>
@@ -219,25 +227,44 @@ const Dashboard = () => {
   const [activeSection, setActiveSection] = useState<'dashboard' | 'reports'>('dashboard');
   const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
   const [editingShipmentId, setEditingShipmentId] = useState<number | null>(null);
-  const [pendingShipments, setPendingShipments] = useState<PendingShipmentItemProps[]>([
-    { id: 1, billOfLadingCount: 2, packingList: true, commercialInvoice: true, containers20ft: 1, containers40ft: 0, onDelete: () => {}, onEdit: () => {} },
-    { id: 2, billOfLadingCount: 1, packingList: false, commercialInvoice: true, containers20ft: 0, containers40ft: 2, onDelete: () => {}, onEdit: () => {} },
-  ]);
-
+  const [pendingShipments, setPendingShipments] = useState<PendingShipmentItemProps[]>([]);
   const [totalContainers, setTotalContainers] = useState(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [shipmentSuccess, setShipmentSuccess] = useState<boolean>(false);
 
-  // Mock data (replace with your API data later)
-  const activeShipments = 5;
-  const pendingDocuments = 3;
+  // Fetch only shipments for the logged-in client based on their email.
+  const fetchPendingShipments = async () => {
+    if (session?.user?.email) {
+      try {
+        const res = await fetch(`/api/shipments?clientEmail=${encodeURIComponent(session.user.email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPendingShipments(Array.isArray(data) ? data : []);
+        } else {
+          console.error("Failed to fetch shipments", await res.text());
+        }
+      } catch (err) {
+        console.error("Error fetching shipments", err);
+      }
+    }
+  };
 
+  // Call it when the session is available.
   useEffect(() => {
-    // Calculate initial total containers from pendingShipments on component mount
+    fetchPendingShipments();
+  }, [session]);
+
+  // Recalculate total containers when pending shipments change.
+  useEffect(() => {
     const initialTotalContainers = pendingShipments.reduce((sum, shipment) => {
       return sum + shipment.containers20ft + shipment.containers40ft;
     }, 0);
     setTotalContainers(initialTotalContainers);
-  }, [pendingShipments]); // Recalculate if pendingShipments changes
+  }, [pendingShipments]);
+
+  // Update active shipments count to show only the client's submitted shipments.
+  // (Assuming all shipments fetched for the client are considered "active.")
+  const activeShipments = pendingShipments.length;
 
   // Sample cost report cards for the report section
   const costReports = [
@@ -306,27 +333,35 @@ const Dashboard = () => {
     setEditingShipmentId(null);
   };
 
-  const handleNewShipmentSubmit = (shipmentData: ShipmentFormData) => {
-    console.log("Shipment Data in submit:", shipmentData); // Log shipmentData in submit
-    console.log("Previous Total Containers:", totalContainers); // Log previous totalContainers
-    if (editingShipmentId !== null) {
-      setPendingShipments(pendingShipments.map(shipment =>
-        shipment.id === editingShipmentId
-          ? { ...shipment, ...shipmentData } as PendingShipmentItemProps
-          : shipment
-      ));
-    } else {
-      const newShipment: PendingShipmentItemProps = {
-        id: Date.now(),
-        ...shipmentData,
-        onDelete: () => {},
-        onEdit: () => {},
-      };
-      setPendingShipments([...pendingShipments, newShipment]);
-      setTotalContainers(prevContainers => prevContainers + shipmentData.containers20ft + shipmentData.containers40ft);
+  const handleNewShipmentSubmit = async (shipmentData: ShipmentFormData) => {
+    const clientEmail = session?.user?.email;
+    console.log('Submission attempt with email:', clientEmail);
+    
+    try {
+      const res = await fetch('/api/shipments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...shipmentData, clientEmail }),
+      });
+
+      const text = await res.text();
+      console.log('API Response:', text);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+
+      console.log("Shipment submitted successfully");
+      await fetchPendingShipments();
+      setShipmentSuccess(true);
+      
+    } catch (err) {
+      console.error('Full submission error:', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        clientEmail,
+        shipmentData
+      });
     }
-    handleCloseShipmentModal();
-    console.log("New Total Containers after submit:", totalContainers); // Log totalContainers after submit
   };
 
   const handleDeleteShipment = (id: number) => {
@@ -371,21 +406,17 @@ const Dashboard = () => {
           { text: 'Reports', icon: <ReportIcon /> },
           { text: 'Settings', icon: <SettingsIcon /> },
         ].map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => {
-              if (item.text === 'Dashboard') {
-                setActiveSection('dashboard');
-              } else if (item.text === 'Reports') {
-                setActiveSection('reports');
-              }
-              // For other sections, you might want to handle routing separately.
-            }}
-          >
+          <ListItemButton component="li" key={item.text} onClick={() => {
+            if (item.text === 'Dashboard') {
+              setActiveSection('dashboard');
+            } else if (item.text === 'Reports') {
+              setActiveSection('reports');
+            }
+            // For other sections, you might want to handle routing separately.
+          }}>
             <ListItemIcon sx={{ color: '#4dd0e1' }}>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} sx={{ color: '#4dd0e1' }} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </Box>
@@ -449,7 +480,7 @@ const Dashboard = () => {
                   </IconButton>
                 </Box>
                 <Typography variant="h6" noWrap component="div">
-                  {session?.user?.name}
+                  {(session?.user as any)?.name || session?.user?.companyName}
                 </Typography>
               </Box>
 
@@ -493,15 +524,6 @@ const Dashboard = () => {
                           icon={<ShipmentIcon />}
                           action={() => router.push('/shipments')}
                           color="#4dd0e1"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={6} lg={4}>
-                        <DashboardCard
-                          title="Pending Documents"
-                          value={pendingDocuments}
-                          icon={<DocumentIcon />}
-                          action={() => router.push('/documents')}
-                          color="#81c784"
                         />
                       </Grid>
                       <Grid item xs={12} sm={6} md={6} lg={4}>
@@ -604,9 +626,9 @@ const Dashboard = () => {
                         Pending Shipments
                       </Typography>
                       {pendingShipments.length > 0 ? (
-                        pendingShipments.map((shipment, index) => (
+                        pendingShipments.map((shipment) => (
                           <PendingShipmentItem
-                            key={index}
+                            key={shipment.id}
                             {...shipment}
                             onDelete={() => handleDeleteShipment(shipment.id)}
                             onEdit={() => handleEditShipment(shipment.id)}
@@ -709,25 +731,63 @@ const Dashboard = () => {
               <Button
                 variant="contained"
                 sx={{ background: 'linear-gradient(45deg, #4dd0e1 30%, #26c6da 90%)' }}
-                onClick={() => {
-                  // Collect data from the modal form
-                  const billOfLadingFiles = document.getElementById('bill-of-lading') as HTMLInputElement;
-                  const packingListFile = document.getElementById('packing-list') as HTMLInputElement;
-                  const commercialInvoiceFile = document.getElementById('commercial-invoice') as HTMLInputElement;
+                onClick={async () => {
+                  // Get file inputs
+                  const billInput = document.getElementById('bill-of-lading') as HTMLInputElement;
+                  const packingInput = document.getElementById('packing-list') as HTMLInputElement;
+                  const invoiceInput = document.getElementById('commercial-invoice') as HTMLInputElement;
+                  
+                  const formData = new FormData();
+                  if(billInput.files) {
+                    for(let i = 0; i < billInput.files.length; i++){
+                      formData.append('billOfLading', billInput.files[i]);
+                    }
+                  }
+                  if(packingInput.files && packingInput.files[0]){
+                    formData.append('packingList', packingInput.files[0]);
+                  }
+                  if(invoiceInput.files && invoiceInput.files[0]){
+                    formData.append('commercialInvoice', invoiceInput.files[0]);
+                  }
+                  
+                  const uploadRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                  });
+                  if(!uploadRes.ok) {
+                    console.error("File upload failed");
+                    return;
+                  }
+                  const fileUrls = await uploadRes.json();
+                  
+                  // Get container inputs
                   const containers20ftInput = document.getElementById('20ft-containers') as HTMLInputElement;
                   const containers40ftInput = document.getElementById('40ft-containers') as HTMLInputElement;
-
-                  const shipmentData: ShipmentFormData = {
-                    billOfLadingCount: billOfLadingFiles.files ? billOfLadingFiles.files.length : 0,
-                    packingList: !!(packingListFile.files && packingListFile.files.length > 0),
-                    commercialInvoice: !!(commercialInvoiceFile.files && commercialInvoiceFile.files.length > 0),
+                  
+                  const shipmentData = {
+                    billOfLadingFiles: fileUrls.billOfLading || [],
+                    packingListFile: fileUrls.packingList || null,
+                    commercialInvoiceFile: fileUrls.commercialInvoice || null,
                     containers20ft: parseInt(containers20ftInput.value, 10) || 0,
                     containers40ft: parseInt(containers40ftInput.value, 10) || 0,
+                    clientEmail: session?.user?.email,
                   };
-                  console.log("Shipment Data in submit:", shipmentData);
-                  console.log("Previous Total Containers:", totalContainers);
-                  handleNewShipmentSubmit(shipmentData);
-                  console.log("New Total Containers after submit:", totalContainers);
+                  
+                  const shipmentRes = await fetch('/api/shipments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shipmentData),
+                  });
+                  
+                  if(shipmentRes.ok) {
+                    const newShipment = await shipmentRes.json();
+                    console.log("Shipment submitted:", newShipment);
+                    setShipmentSuccess(true);
+                    await fetchPendingShipments();
+                    setIsShipmentModalOpen(false);
+                  } else {
+                    console.error("Shipment submission failed");
+                  }
                 }}
               >
                 Submit
@@ -779,6 +839,13 @@ const Dashboard = () => {
           </Grid>
         </ModalContentBox>
       </StyledModal>
+
+      {/* Success Snackbar */}
+      <Snackbar open={shipmentSuccess} autoHideDuration={3000} onClose={() => setShipmentSuccess(false)}>
+        <Alert onClose={() => setShipmentSuccess(false)} severity="success" sx={{ width: '100%' }}>
+          Shipment submitted successfully!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,85 +1,125 @@
-import NextAuth, { DefaultSession } from 'next-auth';
+import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaClient } from '@prisma/client';
 import { compare } from 'bcryptjs';
-import { JWT } from 'next-auth/jwt';
-
-// Extend the built-in session types
-interface ExtendedSession extends DefaultSession {
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-  } & DefaultSession['user']
-}
-
-// Extend the built-in token types
-interface ExtendedToken extends JWT {
-  id: string;
-}
+import type { User } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export default NextAuth({
+// Module augmentation for next-auth
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      role: 'client' | 'admin';
+      companyName?: string;
+      isSuperAdmin?: boolean;
+    };
+  }
+
+  interface User {
+    role: 'client' | 'admin';
+    companyName?: string;
+    isSuperAdmin?: boolean;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role: 'client' | 'admin';
+    companyName?: string;
+    isSuperAdmin?: boolean;
+  }
+}
+
+export const authOptions: NextAuthOptions = {
   providers: [
+    // Client login (User table)
     CredentialsProvider({
-      name: 'Credentials',
+      id: "client-login",
+      name: "Client",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password required');
-        }
+      async authorize(credentials, req): Promise<User | null> {
+        if (!credentials?.email || !credentials.password) return null;
 
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+          where: { email: credentials.email }
         });
+        
+        if (!user) throw new Error('No account found');
+        const isValid = await compare(credentials.password, user.password);
+        if (!isValid) throw new Error('Invalid password');
 
-        if (!user) {
-          throw new Error('No user found with this email');
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid password');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
+        return { 
+          id: user.id, 
+          email: user.email, 
+          role: 'client', 
+          companyName: user.companyName || undefined 
         };
-      },
+      }
     }),
+
+    // Admin login (Admin table)
+    CredentialsProvider({
+      id: "admin-login",
+      name: "Admin",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials): Promise<User | null> {
+        if (!credentials?.email || !credentials.password) return null;
+
+        const admin = await prisma.admin.findUnique({
+          where: { email: credentials.email }
+        });
+        
+        if (!admin) throw new Error('Admin account not found');
+        const isValid = await compare(credentials.password, admin.password);
+        if (!isValid) throw new Error('Invalid admin credentials');
+
+        return { 
+          id: admin.id, 
+          email: admin.email, 
+          role: 'admin',
+          isSuperAdmin: admin.isSuperAdmin
+        };
+      }
+    })
   ],
-  pages: {
-    signIn: '/login',
-    signOut: '/',
-    error: '/login', // Error code passed in query string as ?error=
-  },
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.role = user.role;
+        token.companyName = user.companyName;
+        token.isSuperAdmin = user.isSuperAdmin;
       }
-      return token as ExtendedToken;
+      return token;
     },
     async session({ session, token }) {
-      const extendedSession = session as ExtendedSession;
-      if (extendedSession.user) {
-        extendedSession.user.id = (token as ExtendedToken).id;
-      }
-      return extendedSession;
-    },
+      session.user = {
+        ...session.user,
+        role: token.role,
+        companyName: token.companyName,
+        isSuperAdmin: token.isSuperAdmin
+      };
+      return session;
+    }
   },
-  secret: process.env.NEXTAUTH_SECRET,
-}); 
+  pages: {
+    signIn: '/login',
+    signOut: '/',
+    error: '/login'
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60
+  },
+  secret: process.env.NEXTAUTH_SECRET
+};
+
+export default NextAuth(authOptions); 

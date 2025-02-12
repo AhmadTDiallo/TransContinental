@@ -15,7 +15,7 @@ transcontinental/
 │   ├── components/       # Reusable UI components
 │   │   ├── LoginForm.tsx
 │   │   ├── SignupForm.tsx
-│   │   ├── Dashboard.tsx
+│   │   ├── Dashboard_components.tsx
 │   │   ├── ShipmentCard.tsx
 │   │   └── Navbar.tsx
 │   ├── contexts/          # State management (React Context)
@@ -33,12 +33,12 @@ transcontinental/
 │   │   ├── _document.tsx   # Custom Document component
 │   │   ├── api/           # API routes (serverless functions)
 │   │   │   ├── auth/
-│   │   │   │   ├── signup.ts
-│   │   │   │   └── login.ts
+│   │   │   │   ├── [...nextauth].ts
 │   │   │   └── shipments/
 │   │   │       ├── add.ts
 │   │   │       └── [trackingNumber].ts
 │   │   ├── index.tsx       # Home page
+
 │   │   ├── login.tsx       # Login page
 │   │   └── signup.tsx      # Signup page
 │   ├── styles/            # Global styles (Material UI + Tailwind)

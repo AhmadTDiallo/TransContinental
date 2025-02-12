@@ -7,12 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ShipmentStatus {
+  UNDER_REVIEW
+  ACCEPTED
+  DECLINED
+}
+
 model User {
   id             String    @id @default(cuid())
   email          String    @unique
   password       String
   name           String?
-  companyName    String?
+  companyName    String
   phoneNumber    String?
   companyAddress String?
   city           String?
@@ -20,18 +26,28 @@ model User {
   postalCode     String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  shipments      Shipment[]
+}
+
+model Admin {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  isAdmin       Boolean   @default(false)
+  isSuperAdmin  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Shipment {
-  id                String   @id @default(uuid())
-  origin            String
-  destination       String
-  weight            Float
-  userId            String
-  status            String?
-  estimatedDelivery String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id])
+  id                    String         @id @default(uuid())
+  clientName            String         @default("Unknown Company")
+  billOfLadingFiles     String[]
+  packingListFile       String?
+  commercialInvoiceFile String?
+  containers20ft        Int
+  containers40ft        Int
+  status                ShipmentStatus @default(UNDER_REVIEW)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 }

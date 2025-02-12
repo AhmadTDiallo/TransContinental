@@ -20,7 +20,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const result = await signIn('credentials', {
+    const result = await signIn('client-login', {
       redirect: false,
       email,
       password
@@ -123,7 +123,7 @@ const Login = () => {
                   }}
                   type="submit"
                 >
-                  Sign In
+                  Client Sign In
                 </Button>
               </Grid>
               <Grid item xs={12}>
@@ -133,6 +133,13 @@ const Login = () => {
                     Sign Up
                   </Link>
                 </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Box textAlign="center" mt={2}>
+                  <Link href="/admin/login" sx={{ color: '#4dd0e1' }}>
+                    Admin Login
+                  </Link>
+                </Box>
               </Grid>
             </Grid>
           </form>

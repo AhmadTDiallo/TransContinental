@@ -50,13 +50,14 @@ export default async function handler(
     console.log('Parsed data:', { name, email, password: '***' });
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !companyName) {
       return res.status(400).json({ 
         message: 'Missing required fields',
         details: {
           name: !name ? 'Name is required' : null,
           email: !email ? 'Email is required' : null,
-          password: !password ? 'Password is required' : null
+          password: !password ? 'Password is required' : null,
+          companyName: !companyName ? 'Company name is required' : null
         }
       });
     }
@@ -94,7 +95,7 @@ export default async function handler(
         name: name?.trim(),
         email: email.toLowerCase().trim(),
         password: hashedPassword,
-        companyName: companyName?.trim(),
+        companyName: companyName.trim(),
         phoneNumber: phoneNumber?.trim(),
         companyAddress: companyAddress?.trim(),
         city: city?.trim(),
