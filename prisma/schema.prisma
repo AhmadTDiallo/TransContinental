@@ -41,6 +41,7 @@ model Admin {
 
 model Shipment {
   id                    String         @id @default(uuid())
+  clientEmail           String         @default("")
   clientName            String         @default("Unknown Company")
   billOfLadingFiles     String[]
   packingListFile       String?

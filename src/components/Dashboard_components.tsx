@@ -219,6 +219,57 @@ const RecentActivitySection: React.FC<{ shipments: PendingShipmentItemProps[] }>
   </Box>
 );
 
+const DashboardCard = ({
+  title,
+  value,
+  icon,
+  action,
+  color,
+}: {
+  title: string;
+  value: number | string;
+  icon: React.ReactElement;
+  action: () => void;
+  color: string;
+}) => {
+  return (
+    <Card
+      sx={{
+        minWidth: { xs: '100%', sm: '280px', md: '300px' },
+        height: '100%',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: 2,
+        boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
+        },
+      }}
+    >
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <IconButton sx={{ backgroundColor: `${color}20`, color: color, mr: 2, p: 1.2 }}>
+            {icon}
+          </IconButton>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {title}
+          </Typography>
+        </Box>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: color }}>
+          {value}
+        </Typography>
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+        <Button size="small" onClick={action} sx={{ color: color }}>
+          View Details
+        </Button>
+      </CardActions>
+    </Card>
+  );
+};
+
 const Dashboard = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -231,6 +282,7 @@ const Dashboard = () => {
   const [totalContainers, setTotalContainers] = useState(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shipmentSuccess, setShipmentSuccess] = useState<boolean>(false);
+  const [usersCount, setUsersCount] = useState<number>(0);
 
   // Fetch only shipments for the logged-in client based on their email.
   const fetchPendingShipments = async () => {
@@ -273,53 +325,6 @@ const Dashboard = () => {
     { title: 'Annualized Cost', value: '$60,000', icon: <AssessmentIcon />, color: '#7986cb' },
   ];
 
-  interface DashboardCardProps {
-    title: string;
-    value: number | string;
-    icon: ReactElement;
-    action: () => void;
-    color: string;
-  }
-
-  const DashboardCard = ({ title, value, icon, action, color }: DashboardCardProps) => {
-    console.log(`DashboardCard - Title: ${title}, Value: ${value}`); // Log in DashboardCard
-    return (
-      <Card
-        sx={{
-          height: '100%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(12px)',
-          borderRadius: 2,
-          boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
-          },
-        }}
-      >
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <IconButton sx={{ backgroundColor: `${color}20`, color: color, mr: 2, p: 1.2 }}>
-              {icon}
-            </IconButton>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {title}
-            </Typography>
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: color }}>
-            {value}
-          </Typography>
-        </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          <Button size="small" onClick={action} sx={{ color: color }}>
-            View Details
-          </Button>
-        </CardActions>
-      </Card>
-    );
-  };
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -335,32 +340,17 @@ const Dashboard = () => {
 
   const handleNewShipmentSubmit = async (shipmentData: ShipmentFormData) => {
     const clientEmail = session?.user?.email;
-    console.log('Submission attempt with email:', clientEmail);
-    
-    try {
-      const res = await fetch('/api/shipments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...shipmentData, clientEmail }),
-      });
-
-      const text = await res.text();
-      console.log('API Response:', text);
-      
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-
-      console.log("Shipment submitted successfully");
-      await fetchPendingShipments();
-      setShipmentSuccess(true);
-      
-    } catch (err) {
-      console.error('Full submission error:', {
-        error: err instanceof Error ? err.message : 'Unknown error',
-        clientEmail,
-        shipmentData
-      });
+    const res = await fetch('/api/shipments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...shipmentData, clientEmail }),
+    });
+    if (res.ok) {
+      const newShipment = await res.json();
+      console.log('Shipment submitted:', newShipment);
+      // Optionally refresh local shipment state or provide user feedback
+    } else {
+      console.error('Failed to submit shipment');
     }
   };
 
@@ -421,6 +411,27 @@ const Dashboard = () => {
       </List>
     </Box>
   );
+
+  useEffect(() => {
+    if (session?.user?.role === 'admin') {
+      const fetchUsersCount = async () => {
+        try {
+          const res = await fetch('/api/users');
+          if (res.ok) {
+            const data = await res.json();
+            setUsersCount(data.count);
+          } else {
+            console.error('Error fetching users count', await res.text());
+          }
+        } catch (error) {
+          console.error('Error fetching users count', error);
+        }
+      };
+      fetchUsersCount();
+      const interval = setInterval(fetchUsersCount, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
 
   return (
     <Box sx={{ backgroundColor: '#f4f4f4', height: '100vh', width: '100vw', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -535,6 +546,17 @@ const Dashboard = () => {
                           color="#7986cb"
                         />
                       </Grid>
+                      {session?.user?.role === 'admin' && (
+                        <Grid item xs={12} sm={6} md={6} lg={4}>
+                          <DashboardCard
+                            title="New Clients"
+                            value={usersCount}
+                            icon={<ClientsIcon />}
+                            action={() => router.push('/users')}
+                            color="#81c784"
+                          />
+                        </Grid>
+                      )}
                     </Grid>
 
                     {/* Quick Actions */}
@@ -851,3 +873,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+// Export DashboardCard as a named export so it can be used in AdminDashboard.
+export { DashboardCard };
